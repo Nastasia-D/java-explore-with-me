@@ -3,6 +3,7 @@ package ru.practicum.main.service;
 import client.StatsClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.stats.dto.ViewStats;
 import ru.practicum.main.dto.*;
 import ru.practicum.main.error.ConflictException;
@@ -20,6 +21,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 public class EventService {
     private final EventRepository eventRepository;
     private final CategoryRepository categoryRepository;
@@ -38,6 +40,7 @@ public class EventService {
         this.objectMapper = objectMapper;
     }
 
+    @Transactional
     public EventFullDto createEvent(Long userId, NewEventDto newEventDto) {
         User initiator = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
@@ -93,7 +96,7 @@ public class EventService {
         return toFullDtoWithStats(event);
     }
 
-
+    @Transactional
     public EventFullDto updateUserEvent(Long userId, Long eventId, UpdateEventUserRequest request) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
@@ -130,8 +133,8 @@ public class EventService {
 
         if (request.getStateAction() != null) {
             switch (request.getStateAction()) {
-                case "SEND_TO_REVIEW" -> event.setState(State.PENDING);
-                case "CANCEL_REVIEW" -> event.setState(State.CANCELED);
+                case SEND_TO_REVIEW -> event.setState(State.PENDING);
+                case CANCEL_REVIEW -> event.setState(State.CANCELED);
                 default -> throw new ConflictException("Недопустимое действие с состоянием события: " + request.getStateAction());
             }
         }
@@ -274,7 +277,7 @@ public class EventService {
         return result;
     }
 
-
+    @Transactional
     public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest request) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие с id " + eventId + " не найдено"));
@@ -298,7 +301,7 @@ public class EventService {
 
         if (request.getStateAction() != null) {
             switch (request.getStateAction()) {
-                case "PUBLISH_EVENT" -> {
+                case PUBLISH_EVENT -> {
                     if (event.getState() != State.PENDING) {
                         throw new ConflictException("Опубликовать можно только событие в состоянии PENDING");
                     }
@@ -309,7 +312,7 @@ public class EventService {
                     event.setState(State.PUBLISHED);
                     event.setPublishedOn(LocalDateTime.now());
                 }
-                case "REJECT_EVENT" -> {
+                case REJECT_EVENT -> {
                     if (event.getState() != State.PENDING) {
                         throw new ConflictException("Отклонить можно только событие в состоянии PENDING");
                     }

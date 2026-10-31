@@ -6,6 +6,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "compilations")
@@ -26,7 +27,7 @@ public class Compilation {
     private List<Event> events;
 
     @Column(name = "pinned", nullable = false)
-    private Boolean pinned;
+    private Boolean pinned = false;
 
     @Column(name = "title", nullable = false, length = 50)
     private String title;
@@ -40,6 +41,6 @@ public class Compilation {
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        return Objects.hash(id);
     }
 }

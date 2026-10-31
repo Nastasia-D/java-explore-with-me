@@ -1,6 +1,7 @@
 package ru.practicum.main.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.main.dto.NewUserRequest;
 import ru.practicum.main.dto.UserDto;
 import ru.practicum.main.error.ConflictException;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
@@ -21,6 +23,7 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
+    @Transactional
     public UserDto createUser(NewUserRequest request) {
         String email = request.getEmail();
         if (userRepository.existsByEmail(email)) {
@@ -47,6 +50,7 @@ public class UserService {
         return userDtos;
     }
 
+    @Transactional
     public void deleteUser(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException(

@@ -1,6 +1,7 @@
 package ru.practicum.main.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.main.dto.CategoryDto;
 import ru.practicum.main.dto.NewCategoryDto;
 import ru.practicum.main.error.ConflictException;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class CategoryService {
     private final CategoryRepository categoryRepository;
 
@@ -41,6 +43,7 @@ public class CategoryService {
         return categoryDtos;
     }
 
+    @Transactional
     public CategoryDto createCategory(NewCategoryDto newCategoryDto) {
         String name = newCategoryDto.getName();
         if (categoryRepository.existsByName(name)) {
@@ -51,6 +54,7 @@ public class CategoryService {
         return CategoryMapper.toDto(saveCategory);
     }
 
+    @Transactional
     public CategoryDto updateCategory(Long catId, CategoryDto categoryDto) {
         Category category = categoryRepository.findById(catId)
                 .orElseThrow(() ->
@@ -67,6 +71,7 @@ public class CategoryService {
         return CategoryMapper.toDto(updatedCategory);
     }
 
+    @Transactional
     public void deleteCategory(Long catId) {
         Category category = categoryRepository.findById(catId)
                 .orElseThrow(() ->

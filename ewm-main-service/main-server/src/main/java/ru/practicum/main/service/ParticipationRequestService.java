@@ -123,7 +123,6 @@ public class ParticipationRequestService {
         return requestsDto;
     }
 
-
     @Transactional
     public EventRequestStatusUpdateResult updateRequestStatus(Long userId, Long eventId, EventRequestStatusUpdateRequest updateRequest) {
 
@@ -150,15 +149,10 @@ public class ParticipationRequestService {
             throw new ConflictException("Можно подтвердить или отклонить заявки");
         }
 
-        EventRequestStatusUpdateResult result = new EventRequestStatusUpdateResult();
+        List<Long> requestIds = updateRequest.getRequestIds();
+        long confirmedCount = requestRepository.countByEvent_IdAndStatus(eventId, RequestStatus.CONFIRMED);
 
-        List<ParticipationRequestDto> confirmedRequests = new ArrayList<>();
-        List<ParticipationRequestDto> rejectedRequests = new ArrayList<>();
-
-        long confirmedCount = requestRepository.countByEvent_IdAndStatus(
-                eventId, RequestStatus.CONFIRMED);
-
-        for (Long requestId : updateRequest.getRequestIds()) {
+        for (Long requestId : requestIds) {
             ParticipationRequest request = requestRepository.findById(requestId)
                     .orElseThrow(() -> new NotFoundException("Заявка с id " + requestId + " не найдена"));
 
@@ -174,30 +168,40 @@ public class ParticipationRequestService {
                 throw new ConflictException("Достигнут лимит подтвержденных заявок");
             }
 
-            request.setStatus(newStatus);
-            ParticipationRequest savedRequest = requestRepository.save(request);
-
-            ParticipationRequestDto dto = ParticipationRequestMapper.toDto(savedRequest);
-
             if (newStatus == RequestStatus.CONFIRMED) {
-                confirmedRequests.add(dto);
                 confirmedCount++;
+            }
+        }
+
+        requestRepository.updateRequestsStatus(requestIds, newStatus, eventId);
+
+        if (newStatus == RequestStatus.CONFIRMED && confirmedCount >= event.getParticipantLimit()) {
+            requestRepository.updateRequestsStatusByEventAndStatus(eventId, RequestStatus.PENDING, RequestStatus.REJECTED);
+        }
+
+        List<ParticipationRequest> updatedRequests = requestRepository.findAllById(requestIds);
+        List<ParticipationRequestDto> confirmedRequests = new ArrayList<>();
+        List<ParticipationRequestDto> rejectedRequests = new ArrayList<>();
+
+        for (ParticipationRequest req : updatedRequests) {
+            ParticipationRequestDto dto = ParticipationRequestMapper.toDto(req);
+            if (req.getStatus() == RequestStatus.CONFIRMED) {
+                confirmedRequests.add(dto);
             } else {
                 rejectedRequests.add(dto);
             }
         }
-
         if (newStatus == RequestStatus.CONFIRMED && confirmedCount >= event.getParticipantLimit()) {
-
-            List<ParticipationRequest> pendingRequests = requestRepository.findAllByEvent_IdAndStatus(eventId, RequestStatus.PENDING);
-
-            for (ParticipationRequest pendingRequest : pendingRequests) {
-                pendingRequest.setStatus(RequestStatus.REJECTED);
-                ParticipationRequest savedRequest = requestRepository.save(pendingRequest);
-                rejectedRequests.add(ParticipationRequestMapper.toDto(savedRequest));
+            List<ParticipationRequest> autoRejected = requestRepository.findAllByEvent_IdAndStatus(eventId, RequestStatus.REJECTED);
+            for (ParticipationRequest req : autoRejected) {
+                ParticipationRequestDto dto = ParticipationRequestMapper.toDto(req);
+                if (!rejectedRequests.stream().anyMatch(r -> r.getId().equals(req.getId()))) {
+                    rejectedRequests.add(dto);
+                }
             }
         }
 
+        EventRequestStatusUpdateResult result = new EventRequestStatusUpdateResult();
         result.setConfirmedRequests(confirmedRequests);
         result.setRejectedRequests(rejectedRequests);
 
