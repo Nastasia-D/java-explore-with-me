@@ -5,8 +5,6 @@ import lombok.NoArgsConstructor;
 import ru.practicum.main.dto.*;
 import ru.practicum.main.model.Event;
 import ru.practicum.main.model.Location;
-
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -67,7 +65,7 @@ public class EventMapper {
         event.setRequestModeration(newEventDto.getRequestModeration());
         event.setTitle(newEventDto.getTitle());
         event.setLocation(toLocation(newEventDto.getLocation()));
-        event.setEventDate(LocalDateTime.parse(newEventDto.getEventDate(), FORMATTER));
+        event.setEventDate(newEventDto.getEventDate());
         return event;
     }
 
@@ -101,7 +99,7 @@ public class EventMapper {
         }
 
         if (request.getEventDate() != null) {
-            event.setEventDate(LocalDateTime.parse(request.getEventDate(), FORMATTER));
+            event.setEventDate(request.getEventDate());
         }
 
         if (request.getLocation() != null) {
@@ -140,7 +138,7 @@ public class EventMapper {
         }
 
         if (request.getEventDate() != null) {
-            event.setEventDate(LocalDateTime.parse(request.getEventDate(), FORMATTER));
+            event.setEventDate(request.getEventDate());
         }
 
         if (request.getLocation() != null) {

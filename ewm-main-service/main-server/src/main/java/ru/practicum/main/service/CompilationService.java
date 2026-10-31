@@ -49,10 +49,16 @@ public class CompilationService {
 
         CompilationMapper.updateCompilationFromRequest(request, compilation);
 
+        if (request.getTitle() != null) {
+            compilation.setTitle(request.getTitle());
+        }
+        if (request.getPinned() != null) {
+            compilation.setPinned(request.getPinned());
+        }
+
         if (request.getEvents() != null) {
             compilation.setEvents(getEvents(request.getEvents()));
         }
-
         Compilation saved = compilationRepository.save(compilation);
         return CompilationMapper.toDto(saved);
     }

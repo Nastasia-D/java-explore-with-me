@@ -16,7 +16,6 @@ import ru.practicum.main.repository.ParticipationRequestRepository;
 import ru.practicum.main.repository.UserRepository;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,9 +48,10 @@ public class EventService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NotFoundException("Категория с id " + categoryId + " не найдена"));
 
-        if (LocalDateTime.parse(newEventDto.getEventDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")).isBefore(LocalDateTime.now().plusHours(1))) {
+        if (newEventDto.getEventDate().isBefore(LocalDateTime.now().plusHours(2).minusMinutes(1))) {
             throw new IllegalArgumentException("Дата события должна быть не раньше чем через два часа");
         }
+
         Event event = EventMapper.toEvent(newEventDto);
         event.setInitiator(initiator);
         event.setCategory(category);
@@ -116,11 +116,7 @@ public class EventService {
         }
 
         if (request.getEventDate() != null) {
-            LocalDateTime eventDate = LocalDateTime.parse(
-                    request.getEventDate(),
-                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-            );
-            if (eventDate.isBefore(LocalDateTime.now().plusHours(1))) {
+            if (request.getEventDate().isBefore(LocalDateTime.now().plusHours(2).minusMinutes(1))) {
                 throw new IllegalArgumentException("Дата события должна быть не раньше чем через два часа");
             }
         }
@@ -290,9 +286,9 @@ public class EventService {
         }
 
         if (request.getEventDate() != null) {
-            LocalDateTime eventDate = LocalDateTime.parse(request.getEventDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            LocalDateTime eventDate = request.getEventDate();
 
-            if (eventDate.isBefore(LocalDateTime.now().plusHours(1))) {
+            if (eventDate.isBefore(LocalDateTime.now().plusHours(1).minusMinutes(1))) {
                 throw new IllegalArgumentException("Дата события должна быть не раньше чем через один час");
             }
         }

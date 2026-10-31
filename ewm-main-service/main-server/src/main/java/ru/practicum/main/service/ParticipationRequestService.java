@@ -133,12 +133,12 @@ public class ParticipationRequestService {
             throw new ConflictException("Обрабатывать заявки может только инициатор события");
         }
 
+        // Если модерация не требуется или лимит 0, по ТЗ изменять статус через патч нельзя (выбрасываем конфликт)
         if (event.getParticipantLimit() == 0 || !event.getRequestModeration()) {
             throw new ConflictException("Подтверждение заявок для этого события не требуется");
         }
 
         RequestStatus newStatus;
-
         try {
             newStatus = RequestStatus.valueOf(updateRequest.getStatus());
         } catch (IllegalArgumentException | NullPointerException e) {
@@ -150,12 +150,15 @@ public class ParticipationRequestService {
         }
 
         List<Long> requestIds = updateRequest.getRequestIds();
+        List<ParticipationRequest> requests = requestRepository.findAllById(requestIds);
+
+        if (requests.size() != requestIds.size()) {
+            throw new NotFoundException("Одна или несколько заявок не найдены");
+        }
+
         long confirmedCount = requestRepository.countByEvent_IdAndStatus(eventId, RequestStatus.CONFIRMED);
 
-        for (Long requestId : requestIds) {
-            ParticipationRequest request = requestRepository.findById(requestId)
-                    .orElseThrow(() -> new NotFoundException("Заявка с id " + requestId + " не найдена"));
-
+        for (ParticipationRequest request : requests) {
             if (!request.getEvent().getId().equals(eventId)) {
                 throw new ConflictException("Заявка не относится к указанному событию");
             }
@@ -164,16 +167,18 @@ public class ParticipationRequestService {
                 throw new ConflictException("Обрабатывать можно только ожидающие заявки");
             }
 
-            if (newStatus == RequestStatus.CONFIRMED && confirmedCount >= event.getParticipantLimit()) {
-                throw new ConflictException("Достигнут лимит подтвержденных заявок");
-            }
-
             if (newStatus == RequestStatus.CONFIRMED) {
+                if (confirmedCount >= event.getParticipantLimit()) {
+                    throw new ConflictException("Достигнут лимит подтвержденных заявок");
+                }
+                request.setStatus(RequestStatus.CONFIRMED);
                 confirmedCount++;
+            } else if (newStatus == RequestStatus.REJECTED) {
+                request.setStatus(RequestStatus.REJECTED);
             }
         }
 
-        requestRepository.updateRequestsStatus(requestIds, newStatus, eventId);
+        requestRepository.saveAll(requests);
 
         if (newStatus == RequestStatus.CONFIRMED && confirmedCount >= event.getParticipantLimit()) {
             requestRepository.updateRequestsStatusByEventAndStatus(eventId, RequestStatus.PENDING, RequestStatus.REJECTED);
@@ -187,15 +192,16 @@ public class ParticipationRequestService {
             ParticipationRequestDto dto = ParticipationRequestMapper.toDto(req);
             if (req.getStatus() == RequestStatus.CONFIRMED) {
                 confirmedRequests.add(dto);
-            } else {
+            } else if (req.getStatus() == RequestStatus.REJECTED) {
                 rejectedRequests.add(dto);
             }
         }
+
         if (newStatus == RequestStatus.CONFIRMED && confirmedCount >= event.getParticipantLimit()) {
             List<ParticipationRequest> autoRejected = requestRepository.findAllByEvent_IdAndStatus(eventId, RequestStatus.REJECTED);
             for (ParticipationRequest req : autoRejected) {
                 ParticipationRequestDto dto = ParticipationRequestMapper.toDto(req);
-                if (!rejectedRequests.stream().anyMatch(r -> r.getId().equals(req.getId()))) {
+                if (rejectedRequests.stream().noneMatch(r -> r.getId().equals(req.getId()))) {
                     rejectedRequests.add(dto);
                 }
             }

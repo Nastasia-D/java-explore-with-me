@@ -1,12 +1,12 @@
 package ru.practicum.main.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
-import jakarta.validation.constraints.Size;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -24,8 +24,10 @@ public class NewEventDto {
     @Size(min = 20, max = 7000, message = "Описание должно содержать от 20 до 7000 символов")
     private String description;
 
-    @NotBlank
-    private String eventDate;
+    @NotNull(message = "Дата события не может быть пустой")
+    @Future(message = "Дата события должна быть в будущем")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime eventDate;
 
     @NotNull
     private LocationDto location;

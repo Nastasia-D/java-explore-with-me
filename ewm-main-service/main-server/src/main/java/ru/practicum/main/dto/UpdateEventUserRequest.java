@@ -1,10 +1,13 @@
 package ru.practicum.main.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -19,7 +22,8 @@ public class UpdateEventUserRequest {
     @Size(min = 20, max = 7000, message = "Описание должно содержать от 20 до 7000 символов")
     private String description;
 
-    private String eventDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime eventDate;
     private LocationDto location;
     private Boolean paid;
 
