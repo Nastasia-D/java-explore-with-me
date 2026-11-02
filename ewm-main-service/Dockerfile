@@ -1,3 +1,7 @@
-FROM alpine:3.20
+FROM eclipse-temurin:21-jre
 
-CMD ["sh", "-c", "sleep infinity"]
+WORKDIR /app
+
+COPY main-server/target/main-server-0.0.1-SNAPSHOT.jar app.jar
+
+ENTRYPOINT ["java", "-jar", "app.jar"]

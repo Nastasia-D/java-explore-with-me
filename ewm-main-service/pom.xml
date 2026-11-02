@@ -12,4 +12,8 @@
     <artifactId>ewm-main-service</artifactId>
     <packaging>pom</packaging>
 
+    <modules>
+        <module>main-server</module>
+    </modules>
+
 </project>
