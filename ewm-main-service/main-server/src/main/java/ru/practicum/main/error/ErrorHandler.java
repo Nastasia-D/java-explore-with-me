@@ -45,7 +45,6 @@ public class ErrorHandler {
         List<String> errors = e.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.toList());
-
         String message = "Ошибка валидации входных данных";
         log.warn("Ошибка валидации: {}", errors);
         return new ApiError(errors, message, "Incorrectly made request.", HttpStatus.BAD_REQUEST.toString(), LocalDateTime.now().format(FORMATTER));
@@ -54,7 +53,6 @@ public class ErrorHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
-
         log.warn("Некорректное тело запроса: {}", e.getMessage());
         return new ApiError(List.of(), "Некорректное тело запроса", "Incorrectly made request.", HttpStatus.BAD_REQUEST.toString(), LocalDateTime.now().format(FORMATTER));
     }
