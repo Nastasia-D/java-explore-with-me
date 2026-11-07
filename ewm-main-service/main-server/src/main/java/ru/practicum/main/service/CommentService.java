@@ -15,7 +15,7 @@ import ru.practicum.main.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.List;
 
-import static ru.practicum.main.model.CommentStatus.PENDING;
+import static ru.practicum.main.model.CommentStatus.*;
 import static ru.practicum.main.model.State.PUBLISHED;
 
 @Service
@@ -78,7 +78,7 @@ public class CommentService {
         if (event.getState() != PUBLISHED) {
             throw new NotFoundException("Событие не опубликовано");
         }
-        List<Comment> comments = commentRepository.findByEventIdAndStatus(eventId, CommentStatus.APPROVED);
+        List<Comment> comments = commentRepository.findByEventIdAndStatus(eventId, APPROVED);
         List<CommentDto> commentDtos = new ArrayList<>();
         for (int i = from; i < comments.size() && commentDtos.size() < size; i++) {
             Comment comment = comments.get(i);
@@ -98,8 +98,8 @@ public class CommentService {
         } else {
             comments = switch (status) {
                 case PENDING -> commentRepository.findByEventIdAndStatus(eventId, PENDING);
-                case APPROVED -> commentRepository.findByEventIdAndStatus(eventId, CommentStatus.APPROVED);
-                case REJECTED -> commentRepository.findByEventIdAndStatus(eventId, CommentStatus.REJECTED);
+                case APPROVED -> commentRepository.findByEventIdAndStatus(eventId, APPROVED);
+                case REJECTED -> commentRepository.findByEventIdAndStatus(eventId, REJECTED);
             };
         }
 
@@ -134,7 +134,11 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentDto moderatorAdmin(Long commentId, CommentStatus status) {
+    public CommentDto moderateCommentByAdmin(Long commentId, CommentStatus status) {
+
+        if (status != APPROVED && status != REJECTED) {
+            throw new IllegalArgumentException("Некорректный статус для модерации: " + status);
+        }
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new NotFoundException("Комментарий с id " + commentId + " не найден"));
 

@@ -27,9 +27,9 @@ public class AdminCommentController {
     }
 
     @PatchMapping("/comments/{commentId}")
-    public CommentDto moderatorAdmin(@PathVariable Long commentId, @RequestParam CommentStatus status) {
+    public CommentDto moderateCommentByAdmin(@PathVariable Long commentId, @RequestParam CommentStatus status) {
         log.info("Запрос на модерацию комментария с id {}", commentId);
-        return commentService.moderatorAdmin(commentId, status);
+        return commentService.moderateCommentByAdmin(commentId, status);
     }
 
     @GetMapping("/events/{eventId}/comments")

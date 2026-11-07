@@ -1,1 +1,1 @@
-https://github.com/Nastasia-D/java-explore-with-me/pull/3
+[Пул-реквест с реализацией комментариев](https://github.com/Nastasia-D/java-explore-with-me/pull/3)
