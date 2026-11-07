@@ -133,7 +133,6 @@ public class ParticipationRequestService {
             throw new ConflictException("Обрабатывать заявки может только инициатор события");
         }
 
-        // Если модерация не требуется или лимит 0, по ТЗ изменять статус через патч нельзя (выбрасываем конфликт)
         if (event.getParticipantLimit() == 0 || !event.getRequestModeration()) {
             throw new ConflictException("Подтверждение заявок для этого события не требуется");
         }
